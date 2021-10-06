@@ -15,23 +15,27 @@ import {
 import React from 'react';
 import { Page } from './Page';
 import { useParams } from 'react-router-dom';
-import { QuestionData, getQuestion, postAnswer } from './QuestionsData';
+import { getQuestion, postAnswer } from './QuestionsData';
 import { AnswerList } from './AnswerList';
 import { useForm } from 'react-hook-form';
+import { useSelector, useDispatch } from 'react-redux';
+import { AppState, gettingQuestionAction, gotQuestionAction } from './Store';
 
 type FormData = {
   content: string;
 };
 
 export const QuestionPage = () => {
+  const dispatch = useDispatch();
+  const question = useSelector((state: AppState) => state.questions.viewing);
   const [successfullySubmitted, setSuccessfullySubmitted] =
     React.useState(false);
-  const [question, setQuestion] = React.useState<QuestionData | null>(null);
   const { questionId } = useParams();
   React.useEffect(() => {
     const doGetQuestion = async (questionId: number) => {
+      dispatch(gettingQuestionAction());
       const foundQuestion = await getQuestion(questionId);
-      setQuestion(foundQuestion);
+      dispatch(gotQuestionAction(foundQuestion));
     };
     if (questionId) {
       doGetQuestion(Number(questionId));
