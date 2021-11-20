@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using QnA.Data;
 using QnA.Data.Models;
-using System;
-using System.Collections.Generic;
 
 namespace QnA.Controllers
 {
@@ -11,7 +14,6 @@ namespace QnA.Controllers
     public class QuestionsController : ControllerBase
     {
         private readonly IDataRepository _dataRepository;
-
         public QuestionsController(IDataRepository dataRepository)
         {
             _dataRepository = dataRepository;
@@ -50,22 +52,15 @@ namespace QnA.Controllers
         [HttpPost]
         public ActionResult<QuestionGetSingleResponse> PostQuestion(QuestionPostRequest questionPostRequest)
         {
-            var savedQuestion = _dataRepository.PostQuestion(
-                new QuestionPostFullRequest
-                    {
-                        Title = questionPostRequest.Title,
-                        Content = questionPostRequest.Content,
-                        UserId = "1",
-                        UserName = "bob.test@test.com",
-                        Created = DateTime.UtcNow
-                    });
-
-            return CreatedAtAction(
-                nameof(GetQuestion),
-                new {
-                    questionId = savedQuestion.QuestionId
-                },
-                savedQuestion);
+            var savedQuestion = _dataRepository.PostQuestion(new QuestionPostFullRequest
+            {
+                Title = questionPostRequest.Title,
+                Content = questionPostRequest.Content,
+                UserId = "1",
+                UserName = "bob.test@test.com",
+                Created = DateTime.UtcNow
+            });
+            return CreatedAtAction(nameof(GetQuestion), new { questionId = savedQuestion.QuestionId }, savedQuestion);
         }
 
         [HttpPut("{questionId}")]
@@ -76,17 +71,15 @@ namespace QnA.Controllers
             {
                 return NotFound();
             }
-
-            questionPutRequest.Title = 
-                string.IsNullOrEmpty(questionPutRequest.Title) ?
-                    question.Title :
-                    questionPutRequest.Title;
+            questionPutRequest.Title = string.IsNullOrEmpty(questionPutRequest.Title) ?
+                question.Title :
+                questionPutRequest.Title;
             questionPutRequest.Content =
-                string.IsNullOrEmpty(questionPutRequest.Content) ?
-                    question.Content :
-                    questionPutRequest.Content;
-            var savedQuestion = _dataRepository.PutQuestion(questionId, questionPutRequest);
-
+              string.IsNullOrEmpty(questionPutRequest.Content) ?
+                question.Content :
+                questionPutRequest.Content;
+            var savedQuestion =
+                _dataRepository.PutQuestion(questionId, questionPutRequest);
             return savedQuestion;
         }
 
@@ -98,7 +91,6 @@ namespace QnA.Controllers
             {
                 return NotFound();
             }
-
             _dataRepository.DeleteQuestion(questionId);
             return NoContent();
         }
@@ -111,16 +103,14 @@ namespace QnA.Controllers
             {
                 return NotFound();
             }
-
-            var savedAnswer = _dataRepository.PostAnswer(
-                new AnswerPostFullRequest
-                    {
-                        QuestionId = answerPostRequest.QuestionId.Value,
-                        Content = answerPostRequest.Content,
-                        UserId = "1",
-                        UserName = "bob.test@test.com",
-                        Created = DateTime.UtcNow
-                    });
+            var savedAnswer = _dataRepository.PostAnswer(new AnswerPostFullRequest
+            {
+                QuestionId = answerPostRequest.QuestionId.Value,
+                Content = answerPostRequest.Content,
+                UserId = "1",
+                UserName = "bob.test@test.com",
+                Created = DateTime.UtcNow
+            });
             return savedAnswer;
         }
 

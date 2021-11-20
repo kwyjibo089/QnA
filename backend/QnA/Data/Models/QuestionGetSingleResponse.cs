@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace QnA.Data.Models
 {
@@ -12,6 +14,5 @@ namespace QnA.Data.Models
         public string UserId { get; set; }
         public DateTime Created { get; set; }
         public IEnumerable<AnswerGetResponse> Answers { get; set; }
-
     }
 }
