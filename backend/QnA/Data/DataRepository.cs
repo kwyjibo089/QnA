@@ -1,12 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Dapper;
 using Microsoft.Data.SqlClient;
-using Dapper;
+using Microsoft.Extensions.Configuration;
 using QnA.Data.Models;
-using System.Reflection;
+using System.Collections.Generic;
 
 namespace QnA.Data
 {
