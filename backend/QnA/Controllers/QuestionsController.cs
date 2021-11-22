@@ -3,6 +3,7 @@ using QnA.Data;
 using QnA.Data.Models;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace QnA.Controllers
 {
@@ -11,38 +12,63 @@ namespace QnA.Controllers
     public class QuestionsController : ControllerBase
     {
         private readonly IDataRepository _dataRepository;
-        public QuestionsController(IDataRepository dataRepository)
+        private readonly IQuestionCache _cache;
+
+        public QuestionsController(IDataRepository dataRepository, IQuestionCache cache)
         {
             _dataRepository = dataRepository;
+            _cache = cache;
         }
 
         [HttpGet]
-        public IEnumerable<QuestionGetManyResponse> GetQuestions(string search)
+        public IEnumerable<QuestionGetManyResponse> GetQuestions(
+            string search,
+            bool includeAnswers,
+            int page = 1,
+            int pageSize = 20)
         {
             if (string.IsNullOrEmpty(search))
             {
-                return _dataRepository.GetQuestions();
+                if (includeAnswers)
+                {
+                    return _dataRepository.GetQuestionsWithAnswers();
+                }
+                else
+                {
+                    return _dataRepository.GetQuestions();
+                }
             }
             else
             {
-                return _dataRepository.GetQuestionsBySearch(search);
+                return _dataRepository.GetQuestionsBySearchWithPaging(
+                                    search,
+                                    page,
+                                    pageSize
+                                    );
             }
         }
 
         [HttpGet("unanswered")]
-        public IEnumerable<QuestionGetManyResponse> GetUnansweredQuestions()
+        public async Task<IEnumerable<QuestionGetManyResponse>> GetUnansweredQuestions()
         {
-            return _dataRepository.GetUnansweredQuestions();
+            return await _dataRepository.GetUnansweredQuestionsAsync();
         }
 
         [HttpGet("{questionId}")]
         public ActionResult<QuestionGetSingleResponse> GetQuestion(int questionId)
         {
-            var question = _dataRepository.GetQuestion(questionId);
+            var question = _cache.Get(questionId);
+
             if (question == null)
             {
-                return NotFound();
+                question = _dataRepository.GetQuestion(questionId);
+                if (question == null)
+                {
+                    return NotFound();
+                }
+                _cache.Set(question);
             }
+
             return question;
         }
 
@@ -77,6 +103,9 @@ namespace QnA.Controllers
                 questionPutRequest.Content;
             var savedQuestion =
                 _dataRepository.PutQuestion(questionId, questionPutRequest);
+            
+            _cache.Remove(savedQuestion.QuestionId);
+            
             return savedQuestion;
         }
 
@@ -89,6 +118,7 @@ namespace QnA.Controllers
                 return NotFound();
             }
             _dataRepository.DeleteQuestion(questionId);
+            _cache.Remove(questionId);
             return NoContent();
         }
 
@@ -108,6 +138,9 @@ namespace QnA.Controllers
                 UserName = "bob.test@test.com",
                 Created = DateTime.UtcNow
             });
+
+            _cache.Remove(answerPostRequest.QuestionId.Value);
+
             return savedAnswer;
         }
 
